@@ -1,0 +1,19 @@
+meta {
+  name: 1.3 Ejercicio 1 - Error Status Invalido
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8000/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_status",
+    "status": "pausado",
+    "hours_played": 10
+  }
+}

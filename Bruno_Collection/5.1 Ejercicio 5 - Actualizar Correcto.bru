@@ -1,0 +1,18 @@
+meta {
+  name: 5.1 Ejercicio 5 - Actualizar Correcto
+  type: http
+  seq: 11
+}
+
+patch {
+  url: http://localhost:8000/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "completed",
+    "hours_played": 45
+  }
+}

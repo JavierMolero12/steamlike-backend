@@ -1,0 +1,17 @@
+meta {
+  name: 1.5 Ejercicio 1 - Error Faltan Campos
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:8000/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_campos"
+  }
+}

@@ -1,0 +1,17 @@
+meta {
+  name: 5.3 Ejercicio 5 - Actualizar Error Status Invalido
+  type: http
+  seq: 13
+}
+
+patch {
+  url: http://localhost:8000/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "desinstalado"
+  }
+}

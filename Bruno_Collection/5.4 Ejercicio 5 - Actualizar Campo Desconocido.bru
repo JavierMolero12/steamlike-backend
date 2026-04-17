@@ -1,0 +1,17 @@
+meta {
+  name: 5.4 Ejercicio 5 - Actualizar Campo Desconocido
+  type: http
+  seq: 14
+}
+
+patch {
+  url: http://localhost:8000/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "otro_juego"
+  }
+}

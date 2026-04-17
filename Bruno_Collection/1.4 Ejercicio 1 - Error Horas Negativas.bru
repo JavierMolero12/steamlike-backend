@@ -1,0 +1,19 @@
+meta {
+  name: 1.4 Ejercicio 1 - Error Horas Negativas
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8000/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_horas",
+    "status": "playing",
+    "hours_played": -5
+  }
+}

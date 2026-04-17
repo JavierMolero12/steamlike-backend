@@ -1,0 +1,15 @@
+meta {
+  name: 5.2 Ejercicio 5 - Actualizar Error Vacio
+  type: http
+  seq: 12
+}
+
+patch {
+  url: http://localhost:8000/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}

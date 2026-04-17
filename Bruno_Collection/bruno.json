@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Steamlike Backup API Tests",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

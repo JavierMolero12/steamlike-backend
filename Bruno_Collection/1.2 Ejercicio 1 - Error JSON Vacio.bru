@@ -1,0 +1,15 @@
+meta {
+  name: 1.2 Ejercicio 1 - Error JSON Vacio
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8000/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}

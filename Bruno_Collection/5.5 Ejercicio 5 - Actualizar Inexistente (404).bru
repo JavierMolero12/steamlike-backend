@@ -1,0 +1,17 @@
+meta {
+  name: 5.5 Ejercicio 5 - Actualizar Inexistente (404)
+  type: http
+  seq: 15
+}
+
+patch {
+  url: http://localhost:8000/api/library/entries/9999/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "hours_played": 10
+  }
+}

@@ -1,0 +1,19 @@
+meta {
+  name: 3.1 Ejercicio 3 - Error Duplicado
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:8000/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "sekiro_3000",
+    "status": "wishlist",
+    "hours_played": 0
+  }
+}
