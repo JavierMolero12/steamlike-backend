@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "Steamlike Backup API Tests",
+  "name": "Pruebas Semana 1 Steamlike",
   "type": "collection",
   "ignore": [
     "node_modules",
