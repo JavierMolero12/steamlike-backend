@@ -30,6 +30,12 @@ def not_found_error():
         "message": "La entrada solicitada no existe"
     }, status=404)
 
+def unauthorized_error():
+    return JsonResponse({
+        "error": "unauthorized",
+        "message": "No autenticado"
+    }, status=401)
+
 def entry_to_dict(entry):
     return {
         "id": entry.id,
@@ -41,8 +47,11 @@ def entry_to_dict(entry):
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def entries_list_create(request):
+    if not request.user.is_authenticated:
+        return unauthorized_error()
+
     if request.method == "GET":
-        entries = LibraryEntry.objects.all().order_by("id")
+        entries = LibraryEntry.objects.filter(user=request.user).order_by("id")
         return JsonResponse([entry_to_dict(e) for e in entries], safe=False, status=200)
 
     elif request.method == "POST":
@@ -84,10 +93,11 @@ def entries_list_create(request):
         if details:
             return validation_error(details)
 
-        if LibraryEntry.objects.filter(external_game_id=external_game_id).exists():
+        if LibraryEntry.objects.filter(user=request.user, external_game_id=external_game_id).exists():
             return duplicate_entry_error(external_game_id)
             
         entry = LibraryEntry.objects.create(
+            user=request.user,
             external_game_id=external_game_id,
             status=status,
             hours_played=hours_played
@@ -97,9 +107,15 @@ def entries_list_create(request):
 @csrf_exempt
 @require_http_methods(["GET", "PATCH"])
 def entry_detail_update(request, entry_id):
+    if not request.user.is_authenticated:
+        return unauthorized_error()
+
     try:
         entry = LibraryEntry.objects.get(id=entry_id)
     except LibraryEntry.DoesNotExist:
+        return not_found_error()
+
+    if entry.user != request.user:
         return not_found_error()
 
     if request.method == "GET":
