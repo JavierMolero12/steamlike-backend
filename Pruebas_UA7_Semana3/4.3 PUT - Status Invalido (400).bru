@@ -1,0 +1,19 @@
+meta {
+  name: "4.3 PUT - Status Invalido (400)"
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{baseUrl}}/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_updated",
+    "status": "invalid_status",
+    "hours_played": 10
+  }
+}

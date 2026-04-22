@@ -1,0 +1,19 @@
+meta {
+  name: "4.1 PUT Correcto (200)"
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_updated",
+    "status": "completed",
+    "hours_played": 50
+  }
+}

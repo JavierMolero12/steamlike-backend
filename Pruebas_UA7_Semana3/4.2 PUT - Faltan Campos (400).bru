@@ -1,0 +1,17 @@
+meta {
+  name: "4.2 PUT - Faltan Campos (400)"
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "completed"
+  }
+}

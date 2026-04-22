@@ -1,0 +1,19 @@
+meta {
+  name: "5.3 Operacion sin Autenticar (401)"
+  type: "http"
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "any",
+    "status": "wishlist",
+    "hours_played": 0
+  }
+}

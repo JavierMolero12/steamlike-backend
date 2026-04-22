@@ -1,0 +1,11 @@
+meta {
+  name: "6.2 Verificar Sesion Cerrada (401)"
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/api/users/me/
+  body: none
+  auth: none
+}

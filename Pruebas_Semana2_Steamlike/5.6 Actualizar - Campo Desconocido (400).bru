@@ -1,0 +1,17 @@
+meta {
+  name: "5.6 Actualizar - Campo Desconocido (400)"
+  type: "http"
+  seq: 18
+}
+
+patch {
+  url: {{baseUrl}}/api/library/entries/1/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "non_existent_field": "hello"
+  }
+}

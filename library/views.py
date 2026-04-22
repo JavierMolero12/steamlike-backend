@@ -1,165 +1,140 @@
 import json
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET, require_http_methods
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from .models import LibraryEntry
+from .utils import (
+    validation_error, unauthorized_error, duplicate_entry_error, not_found_error, parse_json_body, entry_to_dict
+)
+
+# library/views.py - Gestión de la Biblioteca de Juegos
 
 @require_GET
 def health(request):
-    return JsonResponse({"status": "ok"})
-
-def validation_error(details=None):
-    data = {
-        "error": "validation_error",
-        "message": "Datos de entrada inválidos",
-    }
-    if details is not None:
-        data["details"] = details
-    return JsonResponse(data, status=400)
-
-def duplicate_entry_error(external_game_id):
-    return JsonResponse({
-        "error": "duplicate_entry",
-        "message": "El juego ya existe en la biblioteca",
-        "details": {"external_game_id": "duplicate"}
-    }, status=400)
-
-def not_found_error():
-    return JsonResponse({
-        "error": "not_found",
-        "message": "La entrada solicitada no existe"
-    }, status=404)
-
-def unauthorized_error():
-    return JsonResponse({
-        "error": "unauthorized",
-        "message": "No autenticado"
-    }, status=401)
-
-def entry_to_dict(entry):
-    return {
-        "id": entry.id,
-        "external_game_id": entry.external_game_id,
-        "status": entry.status,
-        "hours_played": entry.hours_played
-    }
+    """Verifica si el servidor está funcionando correctamente"""
+    return JsonResponse({"status": "ok"}, status=200)
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def entries_list_create(request):
+    """
+    Ruta: /api/library/entries/
+    - GET: Lista todos los juegos del usuario actual.
+    - POST: Crea un nuevo juego asociado al usuario actual.
+    """
+    # Verificamos si el usuario ha iniciado sesión
     if not request.user.is_authenticated:
         return unauthorized_error()
 
+    # --- LISTADO (GET) ---
     if request.method == "GET":
-        entries = LibraryEntry.objects.filter(user=request.user).order_by("id")
+        # Filtramos para que solo vea SUS juegos (Privacidad)
+        entries = LibraryEntry.objects.filter(user=request.user)
         return JsonResponse([entry_to_dict(e) for e in entries], safe=False, status=200)
 
+    # --- CREACIÓN (POST) ---
     elif request.method == "POST":
-        if not request.body:
-            return validation_error()
+        # Parseamos el JSON recibido
+        body, error_response = parse_json_body(request)
+        if error_response: return error_response
 
-        try:
-            body = json.loads(request.body)
-        except json.JSONDecodeError:
-            return validation_error()
-
-        if not body or not isinstance(body, dict):
-            return validation_error()
-            
-        required_fields = ["external_game_id", "status", "hours_played"]
+        # Validaciones de campos obligatorios
+        required = ["title", "platform", "external_game_id"]
         details = {}
-        for field in required_fields:
-            if field not in body:
+        for field in required:
+            if field not in body or not str(body.get(field)).strip():
                 details[field] = "Falta el campo"
-
-        if details:
-            return validation_error(details)
-            
-        external_game_id = body.get("external_game_id")
-        status = body.get("status")
-        hours_played = body.get("hours_played")
         
-        if type(external_game_id) is not str:
-            details["external_game_id"] = "Debe ser string"
-        elif not external_game_id.strip():
-             details["external_game_id"] = "Debe ser string no vacio"
-        
-        if type(status) is not str or status not in LibraryEntry.ALLOWED_STATUSES:
-            details["status"] = "Debe ser string y tener un valor permitido"
-            
-        if type(hours_played) is not int or hours_played < 0:
-            details["hours_played"] = "Debe ser integer y >= 0"
+        if details: return validation_error(details)
 
-        if details:
-            return validation_error(details)
+        # Evitamos juegos duplicados por su ID externo
+        if LibraryEntry.objects.filter(user=request.user, external_game_id=body["external_game_id"]).exists():
+            return duplicate_entry_error()
 
-        if LibraryEntry.objects.filter(user=request.user, external_game_id=external_game_id).exists():
-            return duplicate_entry_error(external_game_id)
-            
+        # Creamos el registro asociándolo al usuario logueado
         entry = LibraryEntry.objects.create(
             user=request.user,
-            external_game_id=external_game_id,
-            status=status,
-            hours_played=hours_played
+            title=body["title"],
+            platform=body["platform"],
+            external_game_id=body["external_game_id"],
+            status=body.get("status", "wishlist"),
+            hours_played=body.get("hours_played", 0)
         )
         return JsonResponse(entry_to_dict(entry), status=201)
 
 @csrf_exempt
-@require_http_methods(["GET", "PATCH"])
+@require_http_methods(["GET", "PUT", "PATCH", "DELETE"])
 def entry_detail_update(request, entry_id):
+    """
+    Ruta: /api/library/entries/{id}/
+    Gestiona un juego específico.
+    """
     if not request.user.is_authenticated:
         return unauthorized_error()
 
+    # Buscamos el juego. Importante: solo buscamos entre los del usuario actual.
     try:
-        entry = LibraryEntry.objects.get(id=entry_id)
+        entry = LibraryEntry.objects.get(id=entry_id, user=request.user)
     except LibraryEntry.DoesNotExist:
         return not_found_error()
 
-    if entry.user != request.user:
-        return not_found_error()
-
+    # --- VER DETALLE (GET) ---
     if request.method == "GET":
         return JsonResponse(entry_to_dict(entry), status=200)
 
-    elif request.method == "PATCH":
-        if not request.body:
-            return validation_error()
+    # --- BORRAR (DELETE) ---
+    elif request.method == "DELETE":
+        entry.delete()
+        return JsonResponse({"ok": True}, status=200)
 
-        try:
-            body = json.loads(request.body)
-        except json.JSONDecodeError:
-            return validation_error()
-            
-        if not body or not isinstance(body, dict):
-            return validation_error()
-            
-        allowed_fields = ["status", "hours_played"]
+    # --- SUSTITUCIÓN TOTAL (PUT) - Ejercicio 4 ---
+    elif request.method == "PUT":
+        body, error_response = parse_json_body(request)
+        if error_response: return error_response
+
+        # PUT requiere enviar TODOS los campos para reemplazar el objeto
+        required = ["title", "platform", "external_game_id", "status", "hours_played"]
         details = {}
+        for field in required:
+            if field not in body:
+                details[field] = "Este campo es obligatorio en PUT"
         
-        for key in body.keys():
-            if key not in allowed_fields:
-                details[key] = "Campo no permitido"
+        if details: return validation_error(details)
+
+        # Actualizamos todos los campos
+        entry.title = body["title"]
+        entry.platform = body["platform"]
+        entry.external_game_id = body["external_game_id"]
+        entry.status = body["status"]
+        entry.hours_played = body["hours_played"]
+        entry.save()
         
-        if details:
-            return validation_error(details)
-            
-        if "status" in body:
-            status = body["status"]
-            if type(status) is not str or status not in LibraryEntry.ALLOWED_STATUSES:
-                details["status"] = "Debe ser string y tener un valor permitido"
-                
-        if "hours_played" in body:
-            hours_played = body["hours_played"]
-            if type(hours_played) is not int or hours_played < 0:
-                details["hours_played"] = "Debe ser integer y >= 0"
-                
-        if details:
-            return validation_error(details)
-            
-        if "status" in body:
-            entry.status = body["status"]
-        if "hours_played" in body:
-            entry.hours_played = body["hours_played"]
-            
+        return JsonResponse(entry_to_dict(entry), status=200)
+
+    # --- ACTUALIZACIÓN PARCIAL (PATCH) - Ejercicio 5 ---
+    elif request.method == "PATCH":
+        body, error_response = parse_json_body(request)
+        if error_response: return error_response
+        
+        if not body:
+            return validation_error({"body": "No se han proporcionado campos"})
+        
+        # Solo permitimos editar estos dos campos según el ejercicio
+        allowed_fields = ["status", "hours_played"]
+        extra_fields = [f for f in body.keys() if f not in allowed_fields]
+        if extra_fields:
+            return validation_error({f: "Campo no permitido" for f in extra_fields})
+
+        # Aplicamos los cambios si el dato es válido
+        for field in allowed_fields:
+            if field in body:
+                val = body[field]
+                # Validamos tipo de dato y valores permitidos
+                if field == "hours_played" and (type(val) is not int or val < 0):
+                    return validation_error({field: "Invalido"})
+                if field == "status" and val not in ["wishlist", "playing", "completed", "dropped"]:
+                    return validation_error({field: "Estado invalido"})
+                setattr(entry, field, val)
+        
         entry.save()
         return JsonResponse(entry_to_dict(entry), status=200)

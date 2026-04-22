@@ -1,0 +1,18 @@
+meta {
+  name: "3.1 Login Correcto"
+  type: "http"
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "ana",
+    "password": "password123"
+  }
+}

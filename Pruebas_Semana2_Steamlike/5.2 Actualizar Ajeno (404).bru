@@ -1,0 +1,17 @@
+meta {
+  name: "5.2 Actualizar Ajeno (404)"
+  type: "http"
+  seq: 14
+}
+
+patch {
+  url: {{baseUrl}}/api/library/entries/999/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "completed"
+  }
+}

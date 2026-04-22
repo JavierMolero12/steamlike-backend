@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Pruebas UA7 Semana 3",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

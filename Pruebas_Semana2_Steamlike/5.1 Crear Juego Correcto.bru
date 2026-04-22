@@ -1,0 +1,19 @@
+meta {
+  name: "5.1 Crear Juego Correcto"
+  type: "http"
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_123",
+    "status": "playing",
+    "hours_played": 10
+  }
+}

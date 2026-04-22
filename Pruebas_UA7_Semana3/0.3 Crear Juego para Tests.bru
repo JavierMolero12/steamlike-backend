@@ -1,0 +1,19 @@
+meta {
+  name: "0.3 Crear Juego para Tests"
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/library/entries/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "external_game_id": "game_ua7_test",
+    "status": "playing",
+    "hours_played": 5
+  }
+}
