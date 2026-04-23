@@ -39,7 +39,7 @@ def entries_list_create(request):
         if error_response: return error_response
 
         # Validaciones de campos obligatorios
-        required = ["title", "platform", "external_game_id"]
+        required = ["external_game_id", "status", "hours_played"]
         details = {}
         for field in required:
             if field not in body or not str(body.get(field)).strip():
@@ -51,11 +51,20 @@ def entries_list_create(request):
         if LibraryEntry.objects.filter(user=request.user, external_game_id=body["external_game_id"]).exists():
             return duplicate_entry_error()
 
+        # Validamos status si se envía
+        valid_statuses = ["wishlist", "playing", "completed", "dropped"]
+        if "status" in body and body["status"] not in valid_statuses:
+            return validation_error({"status": "Estado invalido"})
+        
+        # Validamos hours_played si se envía
+        if "hours_played" in body:
+            hp = body["hours_played"]
+            if type(hp) is not int or hp < 0:
+                return validation_error({"hours_played": "Invalido"})
+
         # Creamos el registro asociándolo al usuario logueado
         entry = LibraryEntry.objects.create(
             user=request.user,
-            title=body["title"],
-            platform=body["platform"],
             external_game_id=body["external_game_id"],
             status=body.get("status", "wishlist"),
             hours_played=body.get("hours_played", 0)
@@ -93,7 +102,7 @@ def entry_detail_update(request, entry_id):
         if error_response: return error_response
 
         # PUT requiere enviar TODOS los campos para reemplazar el objeto
-        required = ["title", "platform", "external_game_id", "status", "hours_played"]
+        required = ["external_game_id", "status", "hours_played"]
         details = {}
         for field in required:
             if field not in body:
@@ -101,9 +110,17 @@ def entry_detail_update(request, entry_id):
         
         if details: return validation_error(details)
 
+        # Validamos status
+        valid_statuses = ["wishlist", "playing", "completed", "dropped"]
+        if body["status"] not in valid_statuses:
+            return validation_error({"status": "Estado invalido"})
+        
+        # Validamos hours_played
+        hp = body["hours_played"]
+        if type(hp) is not int or hp < 0:
+            return validation_error({"hours_played": "Invalido"})
+
         # Actualizamos todos los campos
-        entry.title = body["title"]
-        entry.platform = body["platform"]
         entry.external_game_id = body["external_game_id"]
         entry.status = body["status"]
         entry.hours_played = body["hours_played"]

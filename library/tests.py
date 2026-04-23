@@ -569,3 +569,123 @@ class LibraryAPIExcercisesTests(TestCase):
         detail_url = reverse('entry-detail-update', args=[e.id])
         response = self.client.patch(detail_url, data=json.dumps({"hours_played": 2147483647}), content_type="application/json")
         self.assertEqual(response.status_code, 200)
+
+    # --- UA3: DevOps en la prctica - Ejercicios Evaluables ---
+
+    def test_ua3_ex3_5_external_id_length(self):
+        """Ejercicio 3 y 5: Verifica el mtodo external_id_length()"""
+        entry = LibraryEntry(external_game_id="steam_12345")
+        self.assertEqual(entry.external_id_length(), 11)
+        entry.external_game_id = ""
+        self.assertEqual(entry.external_id_length(), 0)
+
+    def test_ua3_ex5_external_id_upper(self):
+        """Ejercicio 5: Verifica el mtodo external_id_upper()"""
+        entry = LibraryEntry(external_game_id="steam_low")
+        self.assertEqual(entry.external_id_upper(), "STEAM_LOW")
+
+    def test_ua3_ex5_hours_played_label(self):
+        """Ejercicio 5: Verifica el mtodo hours_played_label()"""
+        entry = LibraryEntry(hours_played=0)
+        self.assertEqual(entry.hours_played_label(), "none")
+        entry.hours_played = 5
+        self.assertEqual(entry.hours_played_label(), "low")
+        entry.hours_played = 15
+        self.assertEqual(entry.hours_played_label(), "high")
+
+    def test_ua3_ex5_status_value(self):
+        """Ejercicio 5: Verifica el mtodo status_value()"""
+        e = LibraryEntry(status="wishlist")
+        self.assertEqual(e.status_value(), 0)
+        e.status = "playing"
+        self.assertEqual(e.status_value(), 1)
+        e.status = "completed"
+        self.assertEqual(e.status_value(), 2)
+        e.status = "dropped"
+        self.assertEqual(e.status_value(), 3)
+
+    def test_ua3_ex6_api_health_get_success(self):
+        """Ejercicio 6: Test GET a /api/health/ con verificacin de JSON"""
+        response = self.client.get('/api/health/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+
+    def test_ua3_ex7_api_health_post_405(self):
+        """Ejercicio 7: Test POST a /api/health/ devuelve 405 Method Not Allowed"""
+        response = self.client.post('/api/health/')
+        self.assertEqual(response.status_code, 405)
+
+    # --- UA7: Semana 3 - Ejercicios Evaluables ---
+
+    def test_ua7_ex2_password_change_success(self):
+        """Ejercicio 2: Cambio de contraseña correcto"""
+        url = reverse('change-password')
+        data = {"current_password": "password123", "new_password": "newpassword456"}
+        response = self.client.post(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        
+        # Verificar que el login funciona con la nueva contraseña
+        self.client.logout()
+        data_login = {"username": "testuser", "password": "newpassword456"}
+        response_login = self.client.post(reverse('login'), data=json.dumps(data_login), content_type="application/json")
+        self.assertEqual(response_login.status_code, 200)
+
+    def test_ua7_ex2_password_change_fail_short(self):
+        """Ejercicio 2: Password demasiado corto"""
+        url = reverse('change-password')
+        data = {"current_password": "password123", "new_password": "short"}
+        response = self.client.post(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "validation_error")
+
+    def test_ua7_ex2_password_change_fail_wrong_current(self):
+        """Ejercicio 2: Password actual incorrecto"""
+        url = reverse('change-password')
+        data = {"current_password": "wrongpassword", "new_password": "newpassword456"}
+        response = self.client.post(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+
+    def test_ua7_ex4_put_substitution(self):
+        """Ejercicio 4: PUT sustitución completa"""
+        e = LibraryEntry.objects.create(user=self.user, external_game_id="old_game", status="playing", hours_played=10)
+        url = reverse('entry-detail-update', args=[e.id])
+        data = {"external_game_id": "new_game", "status": "wishlist", "hours_played": 0}
+        response = self.client.put(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        resp_data = response.json()
+        self.assertEqual(resp_data["external_game_id"], "new_game")
+        self.assertEqual(resp_data["status"], "wishlist")
+
+    def test_ua7_ex4_put_missing_field(self):
+        """Ejercicio 4: PUT fallido por falta de campos"""
+        e = LibraryEntry.objects.create(user=self.user, external_game_id="game_put", status="playing", hours_played=10)
+        url = reverse('entry-detail-update', args=[e.id])
+        data = {"status": "wishlist"} # Falta external_game_id y hours_played
+        response = self.client.put(url, data=json.dumps(data), content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+
+    def test_ua7_ex6_logout_success(self):
+        """Ejercicio 6: Logout exitoso"""
+        url = reverse('logout')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 204)
+        # Verificamos que ya no puede acceder a 'me'
+        response_me = self.client.get(reverse('me'))
+        self.assertEqual(response_me.status_code, 401)
+
+    def test_ua7_ex7_account_delete_cascade(self):
+        """Ejercicio 7: Borrado de cuenta y cascada de biblioteca"""
+        # Crear entrada
+        LibraryEntry.objects.create(user=self.user, external_game_id="to_be_deleted", status="playing", hours_played=1)
+        url = reverse('me')
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 240)
+
+        
+        # Verificar que el usuario no existe ya
+        self.assertFalse(User.objects.filter(username="testuser").exists())
+        # Verificar que la entrada de biblioteca ha sido borrada en cascada
+        self.assertEqual(LibraryEntry.objects.count(), 0)
+
+

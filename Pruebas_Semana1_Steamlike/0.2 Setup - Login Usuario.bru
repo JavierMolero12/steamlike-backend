@@ -1,0 +1,18 @@
+meta {
+  name: 0.2 Setup - Login Usuario
+  type: http
+  seq: 0
+}
+
+post {
+  url: http://localhost:8000/api/auth/login/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "s1user",
+    "password": "password123"
+  }
+}

@@ -1,0 +1,18 @@
+meta {
+  name: 0.1 Setup - Registro Usuario
+  type: http
+  seq: 0
+}
+
+post {
+  url: http://localhost:8000/api/auth/register/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "s1user",
+    "password": "password123"
+  }
+}
