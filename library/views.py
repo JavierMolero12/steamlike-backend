@@ -42,7 +42,11 @@ def entries_list_create(request):
         required = ["external_game_id", "status", "hours_played"]
         details = {}
         for field in required:
-            if field not in body or not str(body.get(field)).strip():
+            if field not in body:
+                details[field] = "Falta el campo"
+            elif field == "external_game_id" and (type(body[field]) is not str or not body[field].strip()):
+                details[field] = "Tipo incorrecto o vacio"
+            elif field != "external_game_id" and not str(body.get(field)).strip():
                 details[field] = "Falta el campo"
         
         if details: return validation_error(details)

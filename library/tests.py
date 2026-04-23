@@ -680,7 +680,7 @@ class LibraryAPIExcercisesTests(TestCase):
         LibraryEntry.objects.create(user=self.user, external_game_id="to_be_deleted", status="playing", hours_played=1)
         url = reverse('me')
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, 240)
+        self.assertEqual(response.status_code, 204)
 
         
         # Verificar que el usuario no existe ya

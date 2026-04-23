@@ -1,7 +1,7 @@
 import json
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from .utils import validation_error, unauthorized_error, parse_json_body
@@ -53,6 +53,15 @@ def login_view(request):
     body, error_response = parse_json_body(request)
     if error_response: return error_response
 
+    # Validaciones básicas del login
+    details = {}
+    if "username" not in body:
+        details["username"] = "Falta el campo"
+    if "password" not in body:
+        details["password"] = "Falta el campo"
+        
+    if details: return validation_error(details)
+
     username = body.get("username")
     password = body.get("password")
 
@@ -65,16 +74,23 @@ def login_view(request):
         return unauthorized_error("Credenciales incorrectas")
 
 @csrf_exempt
-@require_GET
+@require_http_methods(["GET", "DELETE"])
 def manage_me(request):
     """
     Ruta: /api/users/me/
-    Devuelve la información del perfil del usuario que está logueado.
+    - GET: Devuelve la información del perfil del usuario.
+    - DELETE: Borra la cuenta del usuario actual.
     """
     if not request.user.is_authenticated:
         return unauthorized_error()
     
-    return JsonResponse({"id": request.user.id, "username": request.user.username}, status=200)
+    if request.method == "GET":
+        return JsonResponse({"id": request.user.id, "username": request.user.username}, status=200)
+        
+    elif request.method == "DELETE":
+        # Al borrar el usuario, Django borrará sus juegos en cascada
+        request.user.delete()
+        return HttpResponse(status=204)
 
 @csrf_exempt
 @require_POST
