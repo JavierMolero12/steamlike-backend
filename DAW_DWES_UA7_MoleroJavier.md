@@ -1,6 +1,9 @@
 # Desarrollo Web en Entorno Servidor - Ejercicios evaluables UA7
 **Autor:** Javier Molero
 
+- **URL del Repositorio:** [https://github.com/JavierMolero12/steamlike-backend](https://github.com/JavierMolero12/steamlike-backend)
+- **URL del Despliegue:** [https://steamlike-backend-hok7.onrender.com](https://steamlike-backend-hok7.onrender.com)
+
 ## Ejercicio 1: Análisis del catálogo y la API CheapShark
 
 Tras analizar la documentación pública de la API de CheapShark (https://apidocs.cheapshark.com/), expongo a continuación las respuestas a las cuestiones planteadas en el ejercicio.
