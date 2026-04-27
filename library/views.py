@@ -55,6 +55,14 @@ def entries_list_create(request):
         if LibraryEntry.objects.filter(user=request.user, external_game_id=body["external_game_id"]).exists():
             return duplicate_entry_error()
 
+        # Validamos que el juego existe en el catálogo externo
+        from catalog.utils import check_game_exists, invalid_external_game_id
+        game_exists, error_response = check_game_exists(body["external_game_id"])
+        if error_response:
+            return error_response # Caso A o B de catálogo (503 / 502)
+        if not game_exists:
+            return invalid_external_game_id() # Caso C (400)
+
         # Validamos status si se envía
         valid_statuses = ["wishlist", "playing", "completed", "dropped"]
         if "status" in body and body["status"] not in valid_statuses:

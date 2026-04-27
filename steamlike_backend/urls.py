@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from library.views import health
 from library import auth_views
+
+def prueba(request):
+    return JsonResponse({"prueba": "exitosa"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -16,6 +20,8 @@ urlpatterns = [
     
     # Biblioteca y Salud
     path("api/library/", include("library.urls")),
+    path("api/catalog/", include("catalog.urls")),
     path("api/health/", health, name="health"),
-    path("health/", health)
+    path("health/", health),
+    path("api/prueba/", prueba, name="prueba")
 ]
