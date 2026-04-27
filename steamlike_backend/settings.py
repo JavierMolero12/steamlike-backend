@@ -141,6 +141,13 @@ CORS_ALLOW_CREDENTIALS = _env_bool("DJANGO_CORS_ALLOW_CREDENTIALS", True)
 # CSRF: Dominios de confianza para formularios.
 CSRF_TRUSTED_ORIGINS = _env_csv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://frontend:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173")
 
-# Configuración de cookies para facilitar el desarrollo local.
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
+# Configuración de cookies para producción (Render) y desarrollo.
+# En producción (cuando no hay DEBUG), necesitamos SameSite=None y Secure=True para que el login funcione.
+if not DEBUG:
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
