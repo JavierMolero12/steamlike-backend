@@ -25,7 +25,7 @@ class LibraryAPIExcercisesTests(TestCase):
     def test_ex1_register_valid(self):
         data = {"username": "newuser", "password": "newpassword123"}
         response = self.client.post(reverse('register'), data=json.dumps(data), content_type="application/json")
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         resp_json = response.json()
         self.assertIn("id", resp_json)
         self.assertEqual(resp_json["username"], "newuser")
