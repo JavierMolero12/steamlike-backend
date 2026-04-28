@@ -2,6 +2,9 @@
 
 Backend Django para el proyecto que se realizará en DWES de 2º DAW.
 
+## Integración Continua (CI)
+[![Django CI](https://github.com/JavierMolero12/steamlike-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/JavierMolero12/steamlike-backend/actions/workflows/ci.yml)
+
 ## Arranque del proyecto
 
 ### 1) Levantar contenedores
