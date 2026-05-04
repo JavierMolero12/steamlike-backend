@@ -23,5 +23,6 @@ urlpatterns = [
     path("api/catalog/", include("catalog.urls")),
     path("api/health/", health, name="health"),
     path("health/", health),
-    path("api/prueba/", prueba, name="prueba")
+    path("api/prueba/", prueba, name="prueba"),
+    path("api/", include("core.urls")),
 ]

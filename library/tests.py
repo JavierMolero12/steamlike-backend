@@ -23,7 +23,7 @@ class LibraryAPIExcercisesTests(TestCase):
     # EJERCICIO 1: POST /api/auth/register/
     # ==========================================
     def test_ex1_register_valid(self):
-        data = {"username": "newuser", "password": "newpassword123"}
+        data = {"username": "newuser", "password": "newpassword123", "email": "newuser@example.com"}
         response = self.client.post(reverse('register'), data=json.dumps(data), content_type="application/json")
         self.assertEqual(response.status_code, 201)
         resp_json = response.json()
@@ -43,13 +43,13 @@ class LibraryAPIExcercisesTests(TestCase):
         self.assertEqual(response.json()["error"], "validation_error")
 
     def test_ex1_register_invalid_short_password(self):
-        data = {"username": "shortpassuser", "password": "123"}
+        data = {"username": "shortpassuser", "password": "123", "email": "user@example.com"}
         response = self.client.post(reverse('register'), data=json.dumps(data), content_type="application/json")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"], "validation_error")
 
     def test_ex1_register_invalid_duplicate_username(self):
-        data = {"username": "testuser", "password": "anotherpassword"}
+        data = {"username": "testuser", "password": "anotherpassword", "email": "testuser@example.com"}
         response = self.client.post(reverse('register'), data=json.dumps(data), content_type="application/json")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"], "validation_error")

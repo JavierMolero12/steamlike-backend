@@ -20,6 +20,7 @@ def register(request):
 
     username = body.get("username")
     password = body.get("password")
+    email = body.get("email")
     
     # Validaciones básicas de registro
     details = {}
@@ -33,6 +34,11 @@ def register(request):
     elif type(password) is not str or len(password) < 8:
         details["password"] = "Debe ser string de al menos 8 caracteres"
 
+    if "email" not in body:
+        details["email"] = "Falta el campo"
+    elif type(email) is not str or "@" not in email:
+        details["email"] = "Debe ser un email válido (contener @)"
+
     if details: return validation_error(details)
 
     # Comprobar si el nombre de usuario ya existe
@@ -40,8 +46,22 @@ def register(request):
         return validation_error({"username": "El nombre de usuario ya está en uso"})
 
     # Crear el usuario (Django encripta la contraseña automáticamente)
-    user = User.objects.create_user(username=username, password=password)
-    return JsonResponse({"id": user.id, "username": user.username}, status=201)
+    user = User.objects.create_user(username=username, password=password, email=email)
+    
+    # --- Ejercicio 5: Envío de email de bienvenida ---
+    from steamlike_backend.services.email_service import EmailService, EmailServiceError
+    try:
+        EmailService.send_email(
+            to=user.email,
+            subject="Bienvenido a Steamlike - Vanguard Dashboard",
+            text=f"Hola {user.username}, ¡bienvenido a bordo! Estamos encantados de tenerte con nosotros.",
+            context_info={"action": "register_welcome", "user_id": user.id}
+        )
+    except EmailServiceError:
+        # El fallo de email no bloquea el registro (según instrucciones)
+        pass
+
+    return JsonResponse({"id": user.id, "username": user.username, "email": user.email}, status=201)
 
 @csrf_exempt
 @require_POST

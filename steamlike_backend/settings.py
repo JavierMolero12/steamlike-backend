@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "corsheaders",  # Para permitir peticiones desde el frontend
     "library",      # Nuestra aplicación de juegos
     "catalog",      # Nuestra aplicación de catálogo de juegos
+    "core",         # Utilidades comunes y debug
 ]
 
 # --- MIDDLEWARE ---
