@@ -23,7 +23,7 @@ class ExternalServiceError(EmailServiceError):
         super().__init__(message, 502)
 
 class EmailService:
-    API_URL = "https://api.maileroo.com/v1/transactional/send"
+    API_URL = "https://smtp.maileroo.com/api/v2/emails"
 
     @staticmethod
     def send_email(to, subject, text, html=None, context_info=None):
@@ -50,17 +50,16 @@ class EmailService:
             raise ExternalServiceError("configuration_missing")
 
         payload = {
-            "from_name": from_name,
-            "from_email": from_email,
-            "to": to,
+            "from": {"address": from_email, "name": from_name},
+            "to": [{"address": to}],
             "subject": subject,
-            "plain_text": text,
+            "plain": text,
         }
         if html:
-            payload["html_content"] = html
+            payload["html"] = html
 
         headers = {
-            "X-API-Key": api_key,
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
