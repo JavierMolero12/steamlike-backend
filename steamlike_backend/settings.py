@@ -135,12 +135,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- CONFIGURACIÓN CORS (Crucial para el Frontend) ---
 # Indicamos qué dominios pueden hacer peticiones a nuestra API (ej: el puerto 3000 o 5173 del frontend).
-CORS_ALLOWED_ORIGINS = _env_csv("DJANGO_CORS_ALLOWED_ORIGINS", "http://frontend:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173")
+CORS_ALLOWED_ORIGINS = _env_csv("DJANGO_CORS_ALLOWED_ORIGINS", "http://frontend:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://steamlike-frontend.onrender.com")
 # Permite que se envíen las cookies de sesión en las peticiones AJAX.
 CORS_ALLOW_CREDENTIALS = _env_bool("DJANGO_CORS_ALLOW_CREDENTIALS", True)
 
 # CSRF: Dominios de confianza para formularios.
-CSRF_TRUSTED_ORIGINS = _env_csv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://frontend:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173")
+CSRF_TRUSTED_ORIGINS = _env_csv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://frontend:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,https://steamlike-frontend.onrender.com")
+
 
 # Configuración de cookies para producción (Render) y desarrollo.
 # En producción (cuando no hay DEBUG), necesitamos SameSite=None y Secure=True para que el login funcione.
