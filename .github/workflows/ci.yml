@@ -28,6 +28,10 @@ jobs:
         python manage.py makemigrations --check --dry-run
         
     - name: Run tests with coverage
+      env:
+        SECRET_KEY: "ci-secret-key"
+        DEBUG: "True"
+        ALLOWED_HOSTS: "*"
       run: |
         coverage run manage.py test
         coverage report
@@ -35,11 +39,18 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     
     steps:
     - name: Deploy application to Render
+      env:
+        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
       run: |
+        if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+          echo "WARNING: RENDER_DEPLOY_HOOK no está configurado. Saltando despliegue."
+          exit 0
+        fi
         echo "¡Todos los tests y comprobaciones han pasado!"
         echo "Iniciando el despliegue automático en Render..."
-        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        curl -X POST $RENDER_DEPLOY_HOOK
         echo "Llamada al Deploy Hook completada."
