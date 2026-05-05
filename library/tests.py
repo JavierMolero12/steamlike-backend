@@ -28,7 +28,7 @@ class LibraryAPIExcercisesTests(TestCase):
         self.assertEqual(response.status_code, 201)
         resp_json = response.json()
         self.assertIn("id", resp_json)
-        self.assertEqual(resp_json["username"], "newuser")
+        self.assertEqual(resp_json["username"], "fail_user")
         self.assertNotIn("password", resp_json)
 
     def test_ex1_register_invalid_empty_json(self):
