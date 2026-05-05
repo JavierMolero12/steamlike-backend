@@ -1,6 +1,40 @@
 # Ejercicios evaluables UA3 - DevOps en la Práctica
 **Alumno:** Javier Molero
 
+## Ejercicio 1: Estado del proyecto y tests locales
+Se ha verificado que el proyecto se encuentra en un estado correcto antes de la integración continua.
+- **Ejecución de tests:** Se han ejecutado los 17 tests del backend localmente.
+- **Resultado:** Todos los tests pasan correctamente (OK). No ha sido necesario realizar correcciones adicionales.
+
+*Entrega: [Insertar captura de ejecución de tests en local aquí]*
+
+## Ejercicio 2: Creación del Workflow de GitHub Actions
+Se ha creado el archivo `.github/workflows/ci.yml` con la siguiente configuración:
+- Se ejecuta en cada `push` a las ramas principales.
+- Instala las dependencias listadas en `requirements.txt`.
+- Ejecuta los tests del backend con `coverage`.
+
+*Entrega: [Enlace al archivo ci.yml en el repositorio]*
+*Entrega: [Insertar captura de ejecución del workflow en verde aquí]*
+
+## Ejercicio 3: Ejecución automática al subir cambios
+Se ha realizado un cambio en el archivo `README.md` y se ha subido al repositorio. El workflow se ha activado de forma automática.
+- **Pasos ejecutados:** Checkout del código, configuración de Python, instalación de dependencias, comprobación de migraciones pendientes y ejecución de tests.
+- **Resultado:** Pipeline finalizado con éxito.
+
+*Entrega: [Insertar captura de la ejecución del workflow aquí]*
+
+## Ejercicio 4: Gestión de errores en el pipeline
+Se ha provocado un fallo intencionado en uno de los tests de registro de usuarios (`library/tests.py`) cambiando el valor esperado.
+- **Detección:** El workflow falló en el paso "Run tests with coverage".
+- **Mensaje de error:** `AssertionError: 'newuser' != 'fail_user'`.
+- **Solución:** Se ha corregido el test devolviendo el valor esperado original y se ha vuelto a subir el cambio, resultando en un pipeline exitoso.
+
+*Entrega: [Insertar captura de ejecución fallida aquí]*
+*Entrega: [Insertar captura de ejecución corregida aquí]*
+
+---
+
 ## Ejercicio 7: Análisis de Cobertura de Código (Python/Django)
 
 Tras implementar la extensa batería de tests unitarios y de integración para asegurar la funcionalidad y la seguridad de nuestra API (autenticación, privacidad y operaciones CRUD de la biblioteca), se ha procedido a analizar la cobertura de código empleando la herramienta `coverage`.
