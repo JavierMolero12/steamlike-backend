@@ -56,11 +56,12 @@ def entries_list_create(request):
             return duplicate_entry_error()
 
         # Validamos que el juego existe en el catálogo externo
-        from catalog.utils import check_game_exists, invalid_external_game_id
-        game_exists, error_response = check_game_exists(body["external_game_id"])
+        from library.catalog_service import CatalogService
+        game_exists, error_response = CatalogService.check_game_exists(body["external_game_id"])
         if error_response:
             return error_response # Caso A o B de catálogo (503 / 502)
         if not game_exists:
+            from catalog.utils import invalid_external_game_id
             return invalid_external_game_id() # Caso C (400)
 
         # Validamos status si se envía

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from library.utils import validation_error
-from .utils import search_games, resolve_games
+from library.catalog_service import CatalogService
 
 @require_GET
 def catalog_search(request):
@@ -16,7 +16,7 @@ def catalog_search(request):
     if not query:
         return validation_error({"q": "El parámetro de búsqueda 'q' es obligatorio y no puede estar vacío."})
 
-    results, error_response = search_games(query)
+    results, error_response = CatalogService.search_games(query)
     
     if error_response:
         return error_response
@@ -44,7 +44,7 @@ def catalog_resolve(request):
     if not all(isinstance(id, str) for id in ids):
          return validation_error({"external_game_ids": "Todos los IDs deben ser de tipo string."})
 
-    results, error_response = resolve_games(ids)
+    results, error_response = CatalogService.resolve_games(ids)
     
     if error_response:
         return error_response
