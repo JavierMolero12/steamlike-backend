@@ -1,65 +1,69 @@
 # steamlike_backend
 
-Backend Django para el proyecto que se realizará en DWES de 2º DAW.
+Backend Django para el proyecto Steamlike (DWES de 2º DAW). Incluye integración con PostgreSQL, Redis para caching y servicios de catálogo externo.
 
 ## Integración Continua (CI)
 [![Django CI](https://github.com/JavierMolero12/steamlike-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/JavierMolero12/steamlike-backend/actions/workflows/ci.yml)
 
-## Arranque del proyecto
+---
 
-### 1) Levantar contenedores
+## Guía de Instalación y Arranque
+
+Si acabas de descargar el proyecto, sigue estos pasos para ponerlo en marcha:
+
+### 1) Configuración de variables de entorno
+Crea un archivo `.env` en la raíz del proyecto basándote en el ejemplo:
+```bash
+cp .env.example .env
 ```
-docker compose up --build
+*(Asegúrate de ajustar las credenciales si es necesario).*
+
+### 2) Levantar la infraestructura con Docker
+Este comando descargará las imágenes (PostgreSQL, Redis) y construirá el contenedor de la aplicación:
+```bash
+docker compose up --build -d
 ```
 
-### 2) Migraciones
-Para crear las migraciones:
-```
-docker compose exec web python manage.py makemigrations
-```
-
-Para aplicar las migraciones:
-```
+### 3) Preparar la Base de Datos
+Ejecuta las migraciones para crear las tablas necesarias:
+```bash
 docker compose exec web python manage.py migrate
 ```
 
-### 3) Crear superusuario (admin)
-```
+### 4) Crear Superusuario (Acceso al Panel de Control)
+```bash
 docker compose exec web python manage.py createsuperuser
 ```
 
-### 4) Abrir el admin
-- Admin: `http://localhost:8000/admin/`
-
-### 5) Health-check
-- `GET http://localhost:8000/health/`
-
-## Comandos útiles dentro del contenedor
-
-### Entrar en una shell del contenedor web
-```
-docker compose exec web bash
+### 5) Verificar Servicios (Caché Redis)
+Para comprobar que la conexión con el servicio Redis es correcta (UA9):
+```bash
+docker compose exec web python manage.py shell < scratch/verify_redis.py
 ```
 
-### Crear una nueva app (ej.: auth_api)
-```
-docker compose exec web python manage.py startapp auth_api
-```
+---
 
-> Recuerda: después hay que añadir la app a `INSTALLED_APPS` y crear/incluir sus `urls.py` si aplica.
+## Endpoints Principales
 
-## Variables de entorno (.env)
-El proyecto carga variables desde `.env` (usado por `docker-compose.yml`).  
-En desarrollo, por defecto CORS permite:
-- `http://frontend:3000`
-- `http://localhost:3000`
+- **Admin:** `http://localhost:8000/admin/`
+- **Health-check:** `GET http://localhost:8000/health/`
+- **Catálogo (Búsqueda):** `GET /api/catalog/search/?q=texto`
+- **Biblioteca:** `/api/library/entries/` (Requiere autenticación)
 
-Si cambias el frontend, ajusta `DJANGO_CORS_ALLOWED_ORIGINS` y `DJANGO_CSRF_TRUSTED_ORIGINS`.
+---
 
-## Estructura inicial
-- `core`: health-check y configuración base
-- `library`: modelo `LibraryEntry`
+## Comandos Útiles
 
-> No hay endpoints API predefinidos (salvo `admin/` y `health/`).
-# #   C I / C D   S t a t u s  
-# DevOps Ejercicio 3: Activación de workflow automática.
+- **Ver logs en tiempo real:** `docker compose logs -f web`
+- **Entrar en la shell del contenedor:** `docker compose exec web bash`
+- **Parar los contenedores:** `docker compose down`
+
+---
+
+## Desarrollo
+- `core`: Utilidades y salud del sistema.
+- `library`: Gestión de la biblioteca personal de juegos.
+- `catalog`: Integración con CheapShark API y caché Redis.
+
+---
+*DevOps Ejercicio 3: Activación de workflow automática.*

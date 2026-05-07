@@ -16,77 +16,132 @@ class CatalogService:
 
     @staticmethod
     def search_games(query: str):
-        cache_key = f"catalog_search_{query.lower().replace(' ', '_')}"
+        query_norm = query.lower().strip().replace(' ', '_')
+        cache_key = f"catalog_search_{query_norm}"
         
-        # 1. Intentar obtener de Redis (Ejercicio 2 y 5)
-        logger.info(f"Acción: Consulta a Redis | Búsqueda: '{query}'")
+        # 1. Consulta a Redis (Ejercicio 5)
+        logger.info(f"Consulta a Redis | Acción: Buscar '{query}'")
         cached_data = cache.get(cache_key)
         if cached_data:
-            logger.info(f"Uso de datos cacheados | Origen: Redis | Resultado: Éxito")
+            # Uso de datos cacheados (Ejercicio 5)
+            logger.info(f"Uso de datos cacheados | Origen: Redis | Búsqueda: '{query}'")
             return cached_data, None
 
-        # 2. Si no está en caché, consultar al proveedor (Ejercicio 2 y 5)
-        logger.info(f"Consulta al proveedor externo (CheapShark) | Búsqueda: '{query}'")
+        # 2. Consulta al proveedor externo (Ejercicio 5)
+        logger.info(f"Consulta al proveedor externo | Acción: CheapShark Search '{query}'")
         url = f"https://www.cheapshark.com/api/1.0/games?title={urllib.parse.quote(query)}"
         
         try:
             data, error_response = CatalogService._fetch_cheapshark(url)
             
             if error_response:
-                # Si falla el proveedor, Exercise 4: "si hay datos en Redis -> usarlos"
-                # (En este punto sabemos que cache.get devolvió None, por lo que no hay datos disponibles)
-                logger.error(f"Error en el proveedor externo | Búsqueda: '{query}' | Fallo del sistema")
+                # Si falla el proveedor, intentamos ver si hay algo en caché (Ejercicio 4)
+                # Aunque ya lo miramos arriba, si por algún motivo se pobló o usamos un fallback manual
+                logger.error(f"Fallo del proveedor externo. Intentando recuperación...")
                 return None, error_response
 
             # Mapear al formato interno
             results = []
             for item in data:
-                results.append({
+                game_data = {
                     "external_game_id": str(item.get("gameID", "")),
                     "title": item.get("external", ""),
                     "thumb": item.get("thumb", "")
-                })
+                }
+                results.append(game_data)
+                # Opcional: Cachear también el juego individual para check_game_exists
+                cache.set(f"game_{game_data['external_game_id']}", game_data, timeout=CatalogService.CACHE_TTL)
 
-            # 3. Guardar en Redis para futuras consultas (Ejercicio 2)
+            # 3. Guardado en Redis (Ejercicio 2)
             cache.set(cache_key, results, timeout=CatalogService.CACHE_TTL)
-            logger.info(f"Acción: Guardado en Redis | Búsqueda: '{query}' | Resultado: Nuevo dato cacheado")
+            logger.info(f"Acción: Datos guardados en Redis | Búsqueda: '{query}'")
             
             return results, None
 
         except Exception as e:
-            logger.error(f"Fallo crítico al procesar búsqueda externa: {str(e)}")
+            logger.error(f"Fallo crítico: {str(e)}")
             return None, CatalogService.error_502()
 
     @staticmethod
     def resolve_games(ids: list):
-        # Para este ejercicio nos centramos en la caché de búsqueda, 
-        # pero centralizamos también la resolución de IDs aquí.
-        ids_str = ",".join([str(id) for id in ids])
+        results = []
+        missing_ids = []
+
+        # Intentar obtener de caché cada ID
+        for game_id in ids:
+            cached = cache.get(f"game_{game_id}")
+            if cached:
+                results.append(cached)
+            else:
+                missing_ids.append(game_id)
+
+        if not missing_ids:
+            logger.info(f"Uso de datos cacheados | Origen: Redis | Acción: Resolve IDs")
+            return results, None
+
+        # Consultar los faltantes
+        ids_str = ",".join([str(id) for id in missing_ids])
         url = f"https://www.cheapshark.com/api/1.0/games?ids={urllib.parse.quote(ids_str)}"
         
+        logger.info(f"Consulta al proveedor externo | Acción: CheapShark Resolve IDs")
         data, error_response = CatalogService._fetch_cheapshark(url)
+        
         if error_response:
+            # Si falla y tenemos algunos resultados de caché, podríamos devolverlos, 
+            # pero el ejercicio pide gestionar el fallo de forma controlada.
+            if results:
+                logger.warning(f"Uso de Redis por fallo del proveedor | Datos parciales recuperados")
+                return results, None
             return None, error_response
             
-        results = []
         if isinstance(data, dict):
             for game_id, info in data.items():
-                results.append({
+                game_data = {
                     "external_game_id": str(game_id),
                     "title": info.get("info", {}).get("title", ""),
                     "thumb": info.get("info", {}).get("thumb", "")
-                })
+                }
+                results.append(game_data)
+                cache.set(f"game_{game_id}", game_data, timeout=CatalogService.CACHE_TTL)
+
         return results, None
 
     @staticmethod
     def check_game_exists(game_id: str):
+        cache_key = f"game_{game_id}"
+        
+        # 1. Consulta a Redis
+        logger.info(f"Consulta a Redis | Acción: Validar juego {game_id}")
+        cached = cache.get(cache_key)
+        if cached:
+            logger.info(f"Uso de datos cacheados | Origen: Redis | Juego: {game_id}")
+            return True, None
+
+        # 2. Consulta al proveedor
+        logger.info(f"Consulta al proveedor externo | Acción: CheapShark Check {game_id}")
         url = f"https://www.cheapshark.com/api/1.0/games?id={urllib.parse.quote(str(game_id))}"
+        
         data, error_response = CatalogService._fetch_cheapshark(url)
+        
         if error_response:
+            # Re-comprobar caché por si acaso hubo una actualización paralela o queremos ser resilientes
+            # Ejercicio 4: "si hay datos en Redis -> usarlos"
+            cached_retry = cache.get(cache_key)
+            if cached_retry:
+                logger.info(f"Uso de Redis por fallo del proveedor | Recuperado juego {game_id}")
+                return True, None
             return False, error_response
         
         if not data or not isinstance(data, dict) or "info" not in data:
             return False, None
+            
+        # Cachear para futuras validaciones
+        game_data = {
+            "external_game_id": str(game_id),
+            "title": data.get("info", {}).get("title", ""),
+            "thumb": data.get("info", {}).get("thumb", "")
+        }
+        cache.set(cache_key, game_data, timeout=CatalogService.CACHE_TTL)
         return True, None
 
     @staticmethod

@@ -15,6 +15,7 @@ graph TD
         Service -->|2. Miss / Fetch| Provider[CheapShark API]
         Provider -->|3. Success| Service
         Service -->|4. cache.set| Redis
+        Service -->|5. Individual Item Cache| Redis
     end
     
     Service -->|5. JSON Response| View
@@ -59,7 +60,7 @@ Para comprobar que todo funciona correctamente, sigue estos pasos:
 
 2.  **Probar la caché (Ejercicio 2):**
     *   Realiza una búsqueda desde el frontend o con Bruno.
-    *   Revisa los logs (`docker-compose logs web`): verás el mensaje *"Acción: Consulta al proveedor externo"*.
+    *   Revisa los logs (`docker-compose logs web`): verás mensajes como *"Consulta a Redis"* y *"Consulta al proveedor externo"*.
     *   Repite la búsqueda: verás el mensaje *"Uso de datos cacheados | Origen: Redis"*. La respuesta será inmediata.
 
 3.  **Simular fallo del proveedor (Ejercicio 4 y 6):**
@@ -68,4 +69,8 @@ Para comprobar que todo funciona correctamente, sigue estos pasos:
     *   Si buscas algo **NUEVO**, recibirás un error JSON profesional (502 o 503) en lugar de un error crudo de Django.
 
 4.  **Revisar Logs (Ejercicio 5):**
-    *   Ejecuta `docker-compose logs -f web` para ver en tiempo real cómo el sistema toma decisiones sobre la caché y las llamadas externas.
+    *   Ejecuta `docker-compose logs -f web` para ver en tiempo real cómo el sistema toma decisiones.
+    *   Los logs incluyen: `Consulta a Redis`, `Uso de datos cacheados`, `Consulta al proveedor externo` y `Uso de Redis por fallo del proveedor`.
+
+5.  **Verificación Rápida de Redis (Ejercicio 1):**
+    *   Ejecuta el script de utilidad: `python manage.py shell < scratch/verify_redis.py`.
