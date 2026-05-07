@@ -21,11 +21,15 @@ class CatalogService:
         
         # 1. Consulta a Redis (Ejercicio 5)
         logger.info(f"Consulta a Redis | Acción: Buscar '{query}'")
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            # Uso de datos cacheados (Ejercicio 5)
-            logger.info(f"Uso de datos cacheados | Origen: Redis | Búsqueda: '{query}'")
-            return cached_data, None
+        try:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                # Uso de datos cacheados (Ejercicio 5)
+                logger.info(f"Uso de datos cacheados | Origen: Redis | Búsqueda: '{query}'")
+                return cached_data, None
+        except Exception as e:
+            logger.warning(f"Fallo de conexión con Redis (get): {e}")
+            cached_data = None
 
         # 2. Consulta al proveedor externo (Ejercicio 5)
         logger.info(f"Consulta al proveedor externo | Acción: CheapShark Search '{query}'")
@@ -50,11 +54,17 @@ class CatalogService:
                 }
                 results.append(game_data)
                 # Opcional: Cachear también el juego individual para check_game_exists
-                cache.set(f"game_{game_data['external_game_id']}", game_data, timeout=CatalogService.CACHE_TTL)
+                try:
+                    cache.set(f"game_{game_data['external_game_id']}", game_data, timeout=CatalogService.CACHE_TTL)
+                except Exception:
+                    pass
 
             # 3. Guardado en Redis (Ejercicio 2)
-            cache.set(cache_key, results, timeout=CatalogService.CACHE_TTL)
-            logger.info(f"Acción: Datos guardados en Redis | Búsqueda: '{query}'")
+            try:
+                cache.set(cache_key, results, timeout=CatalogService.CACHE_TTL)
+                logger.info(f"Acción: Datos guardados en Redis | Búsqueda: '{query}'")
+            except Exception as e:
+                logger.warning(f"Fallo de conexión con Redis (set): {e}")
             
             return results, None
 
@@ -69,7 +79,11 @@ class CatalogService:
 
         # Intentar obtener de caché cada ID
         for game_id in ids:
-            cached = cache.get(f"game_{game_id}")
+            try:
+                cached = cache.get(f"game_{game_id}")
+            except Exception:
+                cached = None
+                
             if cached:
                 results.append(cached)
             else:
@@ -102,7 +116,10 @@ class CatalogService:
                     "thumb": info.get("info", {}).get("thumb", "")
                 }
                 results.append(game_data)
-                cache.set(f"game_{game_id}", game_data, timeout=CatalogService.CACHE_TTL)
+                try:
+                    cache.set(f"game_{game_id}", game_data, timeout=CatalogService.CACHE_TTL)
+                except Exception:
+                    pass
 
         return results, None
 
@@ -112,10 +129,13 @@ class CatalogService:
         
         # 1. Consulta a Redis
         logger.info(f"Consulta a Redis | Acción: Validar juego {game_id}")
-        cached = cache.get(cache_key)
-        if cached:
-            logger.info(f"Uso de datos cacheados | Origen: Redis | Juego: {game_id}")
-            return True, None
+        try:
+            cached = cache.get(cache_key)
+            if cached:
+                logger.info(f"Uso de datos cacheados | Origen: Redis | Juego: {game_id}")
+                return True, None
+        except Exception:
+            cached = None
 
         # 2. Consulta al proveedor
         logger.info(f"Consulta al proveedor externo | Acción: CheapShark Check {game_id}")
@@ -126,7 +146,11 @@ class CatalogService:
         if error_response:
             # Re-comprobar caché por si acaso hubo una actualización paralela o queremos ser resilientes
             # Ejercicio 4: "si hay datos en Redis -> usarlos"
-            cached_retry = cache.get(cache_key)
+            try:
+                cached_retry = cache.get(cache_key)
+            except Exception:
+                cached_retry = None
+                
             if cached_retry:
                 logger.info(f"Uso de Redis por fallo del proveedor | Recuperado juego {game_id}")
                 return True, None
@@ -141,7 +165,10 @@ class CatalogService:
             "title": data.get("info", {}).get("title", ""),
             "thumb": data.get("info", {}).get("thumb", "")
         }
-        cache.set(cache_key, game_data, timeout=CatalogService.CACHE_TTL)
+        try:
+            cache.set(cache_key, game_data, timeout=CatalogService.CACHE_TTL)
+        except Exception:
+            pass
         return True, None
 
     @staticmethod
