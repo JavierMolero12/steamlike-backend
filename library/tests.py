@@ -13,7 +13,7 @@ class LibraryAPIExcercisesTests(TestCase):
         self.list_create_url = reverse('entries-list-create')
         
         # Mokeamos el acceso a la API externa de catalog para que siempre devuelva válido
-        self.patcher = patch('catalog.utils.check_game_exists', return_value=(True, None))
+        self.patcher = patch('library.catalog_service.CatalogService.check_game_exists', return_value=(True, None))
         self.patcher.start()
 
     def tearDown(self):
